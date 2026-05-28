@@ -16,6 +16,8 @@ Telegram userbot built to deploy from GitHub on Dokploy with Nixpacks.
 
 The app now starts directly from the GitHub checkout. It does not self-clone or reinstall dependencies at runtime.
 
+If Dokploy keeps failing during image export, disable the app build cache in Dokploy and trigger a fresh redeploy. The specific `crc32 mismatch` error usually points to a Docker/build-cache problem on the server rather than an app-level build failure.
+
 ## Local Development
 
 ```bash
