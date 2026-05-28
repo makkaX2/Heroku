@@ -56,26 +56,8 @@ def deps():
         f.write(get_file_hash("requirements.txt"))
 
 
-if (
-    getpass.getuser() == "root"
-    and "--root" not in " ".join(sys.argv)
-    and all(trigger not in os.environ for trigger in {"DOCKER", "NO_SUDO"})
-):
-    print("\U0001f6ab" * 15)
-    print("You attempted to run Heroku on behalf of root user")
-    print("Please, create a new user and restart script")
-    print("If this action was intentional, pass --root argument instead")
-    print("\U0001f6ab" * 15)
-    print()
-    print("Type force_insecure to ignore this warning")
-    print("Type no_sudo if your system has no sudo (Debian vibes)")
-    inp = input("> ").lower()
-    if inp != "force_insecure":
-        sys.exit(1)
-    elif inp == "no_sudo":
-        os.environ["NO_SUDO"] = "1"
-        print("Added NO_SUDO in your environment variables")
-        restart()
+# Проверка на root полностью отключена для совместимости с контейнерами Dokploy
+os.environ["NO_SUDO"] = "1"
 
 if sys.version_info < (3, 10, 0):
     print("\U0001f6ab Error: you must use at least Python version 3.10.0")
