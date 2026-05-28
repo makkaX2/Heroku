@@ -618,9 +618,9 @@ ru_keys = 'ёйцукенгшщзхъфывапролджэячсмитьбю.Ё
 en_keys = "`qwertyuiop[]asdfghjkl;'zxcvbnm,./~@#$%^&QWERTYUIOP{}ASDFGHJKL:\"|ZXCVBNM<>?"
 
 BASE_DIR = (
-    "/data"
-    if "DOCKER" in os.environ
-    else os.path.normpath(os.path.join(utils.get_base_dir(), ".."))
+    os.environ.get("HEROKU_DATA_ROOT")
+    or os.environ.get("DATA_ROOT")
+    or os.path.normpath(os.path.join(utils.get_base_dir(), "..", ".heroku-data"))
 )
 
 LOADED_MODULES_DIR = os.path.join(BASE_DIR, "loaded_modules")

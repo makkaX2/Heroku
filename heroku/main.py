@@ -74,12 +74,13 @@ else:
     web_available = True
 
 BASE_DIR = (
-    "/data"
-    if "DOCKER" in os.environ
-    else os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    os.environ.get("HEROKU_DATA_ROOT")
+    or os.environ.get("DATA_ROOT")
+    or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".heroku-data"))
 )
 
 BASE_PATH = Path(BASE_DIR)
+BASE_PATH.mkdir(parents=True, exist_ok=True)
 CONFIG_PATH = BASE_PATH / "config.json"
 
 # fmt: off
@@ -340,9 +341,15 @@ def save_config_key(key: str, value: str) -> bool:
 def gen_port(cfg: str = "port", no8080: bool = False) -> int:
     """
     Generates random free port in case of VDS.
-    In case of Docker, also return 8080, as it's already exposed by default.
+    In case a host port is provided by the platform, prefer it.
     :returns: Integer value of generated port
     """
+    if port := os.environ.get("PORT"):
+        try:
+            return int(port)
+        except ValueError:
+            pass
+
     if "DOCKER" in os.environ and not no8080:
         return 8080
 
@@ -495,9 +502,12 @@ class Heroku:
         self.arguments = parse_arguments()
         if self.arguments.no_git:
             os.environ["HEROKU_NO_GIT"] = "1"
+        if os.environ.get("HEROKU_DEPLOYMENT", "").lower() in {"dokploy", "nixpacks"}:
+            os.environ["HEROKU_NO_GIT"] = "1"
         if self.arguments.data_root:
             BASE_DIR = self.arguments.data_root
             BASE_PATH = Path(BASE_DIR)
+            BASE_PATH.mkdir(parents=True, exist_ok=True)
             CONFIG_PATH = BASE_PATH / "config.json"
         try:
             self.loop = asyncio.get_running_loop()

@@ -16,7 +16,9 @@ __version__ = (2, 0, 0)
 
 import os
 
-NO_GIT = os.environ.get("HEROKU_NO_GIT") == "1"
+NO_GIT = os.environ.get("HEROKU_NO_GIT") == "1" or os.environ.get(
+    "HEROKU_DEPLOYMENT", ""
+).lower() in {"dokploy", "nixpacks"}
 if not NO_GIT:
     import git
 else:

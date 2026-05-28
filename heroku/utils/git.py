@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 def _is_no_git() -> bool:
-    return os.environ.get("HEROKU_NO_GIT") == "1"
+    return os.environ.get("HEROKU_NO_GIT") == "1" or os.environ.get(
+        "HEROKU_DEPLOYMENT", ""
+    ).lower() in {"dokploy", "nixpacks"}
 
 
 # GeekTG Compatibility
@@ -126,6 +128,8 @@ def get_commit_count() -> int:
 
 
 def is_up_to_date():
+    if _is_no_git():
+        return True
     repo = git.Repo(search_parent_directories=True)
     diff = any(repo.iter_commits(f"HEAD..origin/{version.branch}", max_count=1))
     return not diff

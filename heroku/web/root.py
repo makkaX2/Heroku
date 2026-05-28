@@ -47,9 +47,9 @@ from ..tl_cache import CustomTelegramClient
 from ..version import __version__
 
 DATA_DIR = (
-    "/data"
-    if "DOCKER" in os.environ
-    else os.path.normpath(os.path.join(utils.get_base_dir(), ".."))
+    os.environ.get("HEROKU_DATA_ROOT")
+    or os.environ.get("DATA_ROOT")
+    or os.path.normpath(os.path.join(utils.get_base_dir(), "..", ".heroku-data"))
 )
 
 logger = logging.getLogger(__name__)
@@ -95,12 +95,15 @@ class Web:
         return {
             "vds": "https://github.com/hikariatama/assets/raw/master/waning-crescent-moon_1f318.png",
             "lavhost": "https://github.com/hikariatama/assets/raw/master/victory-hand_270c-fe0f.png",
-            "docker": "https://github.com/hikariatama/assets/raw/master/spouting-whale_1f433.png",
+            "dokploy": "https://github.com/hikariatama/assets/raw/master/spouting-whale_1f433.png",
         }[
             (
                 "lavhost"
                 if "LAVHOST" in os.environ
-                else "docker" if "DOCKER" in os.environ else "vds"
+                else "dokploy"
+                if os.environ.get("HEROKU_DEPLOYMENT", "").lower()
+                in {"dokploy", "nixpacks"}
+                else "vds"
             )
         ]
 

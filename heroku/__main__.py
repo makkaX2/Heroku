@@ -12,48 +12,13 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-import getpass
-import hashlib
 import os
-import subprocess
 import sys
-
-from ._internal import restart
 
 if "--no-git" in sys.argv:
     os.environ["HEROKU_NO_GIT"] = "1"
-
-
-def get_file_hash(filename):
-    hasher = hashlib.sha256()
-    try:
-        with open(filename, "rb") as f:
-            hasher.update(f.read())
-        return hasher.hexdigest()
-    except FileNotFoundError:
-        return None
-
-
-def deps():
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--upgrade",
-            "-q",
-            "--disable-pip-version-check",
-            "--no-warn-script-location",
-            "-r",
-            "requirements.txt",
-        ],
-        check=True,
-        timeout=600,
-        capture_output=True,
-    )
-    with open(".requirements_hash", "w") as f:
-        f.write(get_file_hash("requirements.txt"))
+if os.environ.get("HEROKU_DEPLOYMENT", "").lower() in {"dokploy", "nixpacks"}:
+    os.environ["HEROKU_NO_GIT"] = "1"
 
 
 # Проверка на root полностью отключена для совместимости с контейнерами Dokploy
@@ -69,17 +34,18 @@ else:
     try:
         import herokutl
     except Exception:
-        pass
+        print(
+            "🚫 Missing runtime dependency: herokutl.\n"
+            "Install requirements during the build stage and redeploy."
+        )
+        sys.exit(1)
     else:
-        try:
-            import herokutl  # noqa: F811
-
-            if tuple(map(int, herokutl.__version__.split("."))) < (1, 7, 2):
-                raise ImportError
-        except ImportError:
-            print("\U0001f504 Installing dependencies...")
-            deps()
-            restart()
+        if tuple(map(int, herokutl.__version__.split("."))) < (1, 7, 2):
+            print(
+                "🚫 herokutl is too old for this build.\n"
+                "Update requirements.txt and redeploy the app."
+            )
+            sys.exit(1)
 
     try:
         from . import log
@@ -88,26 +54,15 @@ else:
         from . import main
     except ImportError as e:
         print(
-            f"{str(e)}\n\U0001f504 Attempting dependencies installation... Just wait ⏱"
+            f"{str(e)}\n"
+            "🚫 Import failed during startup.\n"
+            "Build dependencies in Dokploy/Nixpacks and redeploy."
         )
-        deps()
-        restart()
+        sys.exit(1)
 
     if "HEROKU_DO_NOT_RESTART" in os.environ:
         del os.environ["HEROKU_DO_NOT_RESTART"]
     if "HEROKU_DO_NOT_RESTART2" in os.environ:
         del os.environ["HEROKU_DO_NOT_RESTART2"]
-
-    prev_hash = None
-    if os.path.exists(".requirements_hash"):
-        with open(".requirements_hash", "r") as f:
-            prev_hash = f.read().strip()
-
-    if prev_hash != get_file_hash("requirements.txt"):
-        print(
-            "\U0001f504 Detected changes in requirements.txt, updating dependencies..."
-        )
-        deps()
-        restart()
 
     main.heroku.main()

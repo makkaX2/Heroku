@@ -86,7 +86,7 @@ class Web(root.Web):
         if not url:
             ip = (
                 "127.0.0.1"
-                if "DOCKER" not in os.environ
+                if "LAVHOST" not in os.environ
                 else subprocess.run(
                     ["hostname", "-i"],
                     stdout=subprocess.PIPE,
@@ -108,7 +108,7 @@ class Web(root.Web):
     async def start(self, port: int, proxy_pass: bool = False):
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
-        self.port = os.environ.get("PORT", port)
+        self.port = int(os.environ.get("PORT", port))
         site = web.TCPSite(self.runner, None, self.port)
         self.proxypasser = proxypass.ProxyPasser(port=self.port)
         await site.start()

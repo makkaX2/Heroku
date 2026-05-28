@@ -15,6 +15,8 @@ import herokutl
 parser = herokutl.utils.sanitize_parse_mode("html")
 logger = logging.getLogger(__name__)
 
+IS_DOKPLOY = os.environ.get("HEROKU_DEPLOYMENT", "").lower() == "dokploy"
+IS_NIXPACKS = os.environ.get("HEROKU_DEPLOYMENT", "").lower() == "nixpacks"
 IS_DOCKER = "DOCKER" in os.environ
 IS_LAVHOST = "LAVHOST" in os.environ
 IS_HIKKAHOST = "HIKKAHOST" in os.environ
@@ -58,6 +60,8 @@ def get_named_platform() -> str:
             return "UserLand"
         case _ if IS_HIKKAHOST:
             return "HikkaHost"
+        case _ if IS_DOKPLOY or IS_NIXPACKS:
+            return "Dokploy"
         case _ if IS_DOCKER:
             return "Docker"
         case _ if IS_LAVHOST:
@@ -96,6 +100,8 @@ def get_named_platform_emoji() -> str:
             return "🐧 "
         case _ if IS_HIKKAHOST:
             return "🌼 "
+        case _ if IS_DOKPLOY or IS_NIXPACKS:
+            return "💎 "
         case _ if IS_DOCKER:
             return "🐳 "
         case _ if IS_LAVHOST:
@@ -128,6 +134,8 @@ def get_platform_emoji() -> str:
             return BASE.format(5458877818031077824)
         case _ if IS_LAVHOST:
             return BASE.format(5352753797531721191)
+        case _ if IS_DOKPLOY or IS_NIXPACKS:
+            return BASE.format(5393588431026674882)
         case _ if IS_DOCKER:
             return BASE.format(5352678227582152630)
         case _:
